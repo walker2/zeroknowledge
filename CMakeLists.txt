@@ -3,6 +3,6 @@ project(zeroknowledge)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES main.cpp Viktor.cpp Viktor.h Peggy.cpp Peggy.h)
+set(SOURCE_FILES main.cpp Verifier.cpp Verifier.h Prover.cpp Prover.h ITransportClient.h Utils.h)
 add_executable(zeroknowledge ${SOURCE_FILES})
 target_link_libraries(zeroknowledge ntl)
