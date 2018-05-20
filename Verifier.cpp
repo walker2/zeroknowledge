@@ -17,36 +17,54 @@ void Verifier::ReceiveMessage(STEPS step, const Vec<ZZ> &data)
     {
         case STEPS::SENDHS:
         {
-            hs.SetLength(t);
-            hs = static_cast<Vec<ZZ>> (data);
-            std::cout << "Verifier received hs: " << hs << std::endl;
-            std::cout << "Starting coin flip protocol!" << std::endl;
-            CoinFlipProtocol();
+            ReceiveHS(data);
         }   break;
         case STEPS::COINRNG:
         {
-            auto vector = static_cast<Vec<ZZ>>(data);
-            ZZ even_or_odd = vector[0];
-            if (even_or_odd == is_x0_odd)
-            {
-                bits[coin_flips++] = 1;
-            } else
-            {
-                bits[coin_flips++] = 0;
-            }
-            if (min_idx == -1 && bits[coin_flips - 1] == 1)
-            {
-                min_idx = coin_flips - 1;
-            }
+            ReceiveGuess(data);
+        }   break;
+        case STEPS::SENDR:
+        {
+            sent_r = static_cast<Vec<ZZ>>(data);
+            SendMessage(STEPS::RREC, {});
+        }   break;
+        case STEPS::SENDS:
+        {
+            ReceiveS(data);
+        }   break;
+        case STEPS::SENDZ:
+        {
+            ReceiveZ(data);
+        }   break;
+        default:
+            std::cout << "Error parsing message" << std::endl;
+    }
+}
 
-            Vec<ZZ> vec;
-            vec.SetLength(3);
-            vec[0] = coin_x;
-            vec[1] = coin_p;
-            vec[2] = coin_q;
-            SendMessage(STEPS::COINX, vec);
+void Verifier::ReceiveGuess(const Vec<ZZ> &data)
+{
+    auto vector = static_cast<Vec<ZZ>>(data);
+    ZZ even_or_odd = vector[0];
+    if (even_or_odd == is_x0_odd)
+    {
+        bits[coin_flips++] = 1;
+    } else
+    {
+        bits[coin_flips++] = 0;
+    }
+    if (min_idx == -1 && bits[coin_flips - 1] == 1)
+    {
+        min_idx = coin_flips - 1;
+    }
 
-            if (coin_flips < t)
+    Vec<ZZ> vec;
+    vec.SetLength(3);
+    vec[0] = coin_x;
+    vec[1] = coin_p;
+    vec[2] = coin_q;
+    SendMessage(STEPS::COINX, vec);
+
+    if (coin_flips < t)
             {
                 CoinFlipProtocol();
             } else
@@ -56,67 +74,64 @@ void Verifier::ReceiveMessage(STEPS step, const Vec<ZZ> &data)
 
                 SendMessage(STEPS::COINOVER, {});
             }
-        }   break;
-        case STEPS::SENDR:
-        {
-            sent_r = static_cast<Vec<ZZ>>(data);
-            SendMessage(STEPS::RREC, {});
-        }
-            break;
-        case STEPS::SENDS:
-        {
-            sent_s = static_cast<Vec<ZZ>>(data);
+}
 
-            std::cout << "sent_r" << sent_r << std::endl;
-            std::cout << "sent_s" << sent_s << std::endl;
+void Verifier::ReceiveS(const Vec<ZZ> &data)
+{
+    sent_s = static_cast<Vec<ZZ>>(data);
 
-            for (long i = 0; i < t; i++)
+    std::cout << "sent_r" << sent_r << std::endl;
+    std::cout << "sent_s" << sent_s << std::endl;
+
+    for (long i = 0; i < t; i++)
+    {
+        ZZ res;
+        if (bits[i] == 0)
+        {
+            res = PowerMod(a, sent_r[i], p);
+            if (res != hs[i])
             {
-                ZZ res;
-                if (bits[i] == 0)
-                {
-                    res = PowerMod(a, sent_r[i], p);
-                    if (res != hs[i])
-                    {
-                        std::cout << COLOR_RED <<  "a^r = h mod p is not true" << COLOR_DEFAULT << std::endl;
-                        Approved(false);
-                        return;
-                    }
-                }
-                else
-                {
-                    ZZ right;
-                    res = PowerMod(a, sent_s[i], p);
-                    right = MulMod(hs[i], InvMod(hs[min_idx], p), p);
-                    if (res != right)
-                    {
-                        std::cout << COLOR_RED << "a^s = h[i]h[j]^-1 mod p is not true" << COLOR_DEFAULT << std::endl;
-                        Approved(false);
-                        return;
-                    }
-                }
+                std::cout << COLOR_RED << "a^r = h mod p is not true" << COLOR_DEFAULT << std::endl;
+                Approved(false);
             }
-
-            SendMessage(STEPS::BITVER, {});
         }
-            break;
-        case STEPS::SENDZ:
+        else
         {
-            auto Z = data[0];
-
-            ZZ left, right;
-
-            left = PowerMod(a, Z, p);
-            right = MulMod(b, InvMod(hs[min_idx], p), p);
-
-            std::cout << "left: " << left << "\n";
-            std::cout << "right: "<< right << "\n";
-            Approved(left == right != 0);
+            ZZ right;
+            res = PowerMod(a, sent_s[i], p);
+            right = MulMod(hs[i], InvMod(hs[min_idx], p), p);
+            if (res != right)
+            {
+                std::cout << COLOR_RED << "a^s = h[i]h[j]^-1 mod p is not true" << COLOR_DEFAULT << std::endl;
+                Approved(false);
+            }
         }
-            break;
-        default:
-            std::cout << "Error parsing message" << std::endl;
     }
+
+    SendMessage(STEPS::BITVER, {});
+}
+
+void Verifier::ReceiveZ(const Vec<ZZ> &data)
+{
+    auto Z = data[0];
+
+    ZZ left, right;
+
+    left = PowerMod(a, Z, p);
+    right = MulMod(b, InvMod(hs[min_idx], p), p);
+
+    std::cout << "left: " << left << "\n";
+    std::cout << "right: " << right << "\n";
+    Approved(left == right != 0);
+}
+
+void Verifier::ReceiveHS(const Vec<ZZ> &data)
+{
+    hs.SetLength(t);
+    hs = static_cast<Vec<ZZ>> (data);
+    std::cout << "Verifier received hs: " << hs << std::endl;
+    std::cout << "Starting coin flip protocol!" << std::endl;
+    CoinFlipProtocol();
 }
 
 void Verifier::CoinFlipProtocol()
@@ -157,4 +172,19 @@ void Verifier::CoinFlipProtocol()
 
     coin_x = x;
     SendMessage(STEPS::COINN, coin_vec);
+}
+
+void Verifier::Approved(bool isApproved)
+{
+    if (isApproved)
+    {
+        std::cout << COLOR_GREEN << "OKAY" << COLOR_DEFAULT << std::endl;
+        std::cout << "Prover knows x, probability of her cheating is " << 1 / (std::pow(2, t)) << std::endl;
+        SendMessage(STEPS::OKAY, {});
+    } else
+    {
+        std::cout << COLOR_RED << "DENIED" << COLOR_DEFAULT << std::endl;
+        std::cout << "Prover is lying" << std::endl;
+        SendMessage(STEPS::ERROR, {});
+    }
 }

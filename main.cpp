@@ -16,9 +16,9 @@ int main()
     long t = 64;
     ZZ a, x, b, p;
 
-    a = RandomBits_ZZ(4);
-    x = RandomBits_ZZ(4);
-    p = GenPrime_ZZ(5);
+    a = RandomBits_ZZ(64);
+    x = RandomBits_ZZ(64);
+    p = GenPrime_ZZ(65);
     b = PowerMod(a, x, p);
 
     cout << "a: " << a << "\n";

@@ -30,23 +30,7 @@ private:
 
     void CoinFlipProtocol();
 
-    void Approved(bool isApproved)
-    {
-        if (isApproved)
-        {
-            std::cout << COLOR_GREEN << "OKAY" << COLOR_DEFAULT << std::endl;
-            std::cout << "Prover knows x, probability of her cheating is " << 1 / (std::pow(2, t)) << std::endl;
-            SendMessage(STEPS::OKAY, {});
-        } else
-        {
-            std::cout << COLOR_RED << "DENIED" << COLOR_DEFAULT << std::endl;
-            std::cout << "Prover is lying" << std::endl;
-            SendMessage(STEPS::ERROR, {});
-        }
-
-
-
-    }
+    void Approved(bool isApproved);
 
 private:
     long coin_flips = 0;
@@ -58,6 +42,14 @@ private:
     Vec<ZZ> bits;
     ZZ coin_x, coin_p, coin_q;
     Vec<ZZ> sent_r, sent_s;
+
+    void ReceiveHS(const Vec<ZZ> &data);
+
+    void ReceiveZ(const Vec<ZZ> &data);
+
+    void ReceiveS(const Vec<ZZ> &data);
+
+    void ReceiveGuess(const Vec<ZZ> &data);
 };
 
 

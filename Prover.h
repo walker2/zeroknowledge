@@ -22,11 +22,7 @@ public:
 
     void SetVerifier(Verifier *_verifier) { verifier = _verifier; }
 
-    void Prove()
-    {
-        generateR();
-        generateH();
-    }
+    void Prove();
 
 public:
     void SendMessage(STEPS step, const Vec<ZZ>& data) override;
@@ -34,8 +30,8 @@ public:
 
 private:
     Verifier* verifier;
-    void generateR();
-    void generateH();
+    void GenerateR();
+    void GenerateH();
 
 private:
     long coin_flips = 0;
@@ -49,6 +45,13 @@ private:
     Vec<ZZ> sent_r;
     Vec<ZZ> sent_s;
 
+    void ReceiveNandX(const Vec<ZZ> &data);
+
+    void CheckYourGuess(const Vec<ZZ> &data);
+
+    void CalculateAndSendZ();
+
+    void SendR();
 };
 
 #endif
