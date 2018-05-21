@@ -65,15 +65,15 @@ void Verifier::ReceiveGuess(const Vec<ZZ> &data)
     SendMessage(STEPS::COINX, vec);
 
     if (coin_flips < t)
-            {
-                CoinFlipProtocol();
-            } else
-            {
-                std::cout << "generated bits: " << bits << std::endl;
-                std::cout << "Min index " << min_idx << std::endl;
+    {
+        CoinFlipProtocol();
+    } else
+    {
+        std::cout << "generated bits: " << bits << std::endl;
+        std::cout << "Min index " << min_idx << std::endl;
 
-                SendMessage(STEPS::COINOVER, {});
-            }
+        SendMessage(STEPS::COINOVER, {});
+    }
 }
 
 void Verifier::ReceiveS(const Vec<ZZ> &data)

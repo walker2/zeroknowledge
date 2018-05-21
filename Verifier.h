@@ -14,7 +14,7 @@ class Prover;
 class Verifier : ITransportClient
 {
 public:
-    Verifier(const ZZ &_a, const ZZ &_b, const ZZ &_x, const ZZ &_p, long _t) : a(_a), b(_b), x(_x), p(_p), t(_t)
+    Verifier(const ZZ &_a, const ZZ &_b, const ZZ &_p, long _t) : a(_a), b(_b), p(_p), t(_t)
     {
         bits.SetLength(t);
     }
@@ -37,7 +37,7 @@ private:
     long t;
     long min_idx = -1;
     long is_x0_odd;
-    ZZ a, b, x, p;
+    ZZ a, b, p;
     Vec<ZZ> hs;
     Vec<ZZ> bits;
     ZZ coin_x, coin_p, coin_q;
